@@ -54,9 +54,43 @@ class StdOutListener(StreamListener):
                         #print('This is a retweeted status')
                         continue
 
-            if 'IncludeMediaOnly' in dataDiscord:         #retweets...
+            media_url = ''
+            media_type = ''
+            if 'extended_tweet' in data:
+                if 'media' in data['extended_tweet']['entities']:
+                    for media in data['extended_tweet']['entities']['media']:
+                        if media['type'] == 'photo':
+                            media_url = media['media_url']
+
+            if 'media' in data['entities']:
+                for media in data['entities']['media']:
+                    if media['type'] == 'photo' and not media_url:
+                        media_url = media['media_url_https']
+                        media_type = 'photo'
+                    if media['type'] == 'video':
+                        media_url = media['media_url_https']
+                        media_type = 'photo'
+                    if media['type'] == 'animated_gif' and media_type != "video":
+                        media_url = media['media_url_https']
+                        media_type = 'photo'
+
+            post_as_url = False
+
+            if 'extended_entities' in data and 'media' in data['extended_entities']:
+                for media in data['extended_entities']['media']:
+                    if media['type'] == 'photo' and not media_url:
+                        media_url = media['media_url_https']
+                        media_type = media['type']
+                    if media['type'] == 'video':
+                        post_as_url = True
+                        media_type = media['type']
+                    if media['type'] == 'animated_gif' and media_type != "video":
+                        post_as_url = True
+                        media_type = 'gif'
+
+            if 'IncludeMediaOnly' in dataDiscord:         #media...
                 if dataDiscord['IncludeMediaOnly'] == False:
-                    if 'extended_tweet' not in data and 'media' not in data['entities']:
+                    if media_type == '':
                         #print('This is a non media status')
                         continue
 
@@ -85,40 +119,6 @@ class StdOutListener(StreamListener):
 
                 for userMention in data['entities']['user_mentions']:
                     text = text.replace('@%s' %userMention['screen_name'], '[@%s](https://twitter.com/%s)' %(userMention['screen_name'],userMention['screen_name']))
-
-                media_url = ''
-                media_type = ''
-                if 'extended_tweet' in data:
-                    if 'media' in data['extended_tweet']['entities']:
-                        for media in data['extended_tweet']['entities']['media']:
-                            if media['type'] == 'photo':
-                                media_url = media['media_url']
-
-                if 'media' in data['entities']:
-                    for media in data['entities']['media']:
-                        if media['type'] == 'photo' and not media_url:
-                            media_url = media['media_url_https']
-                            media_type = 'photo'
-                        if media['type'] == 'video':
-                            media_url = media['media_url_https']
-                            media_type = 'photo'
-                        if media['type'] == 'animated_gif' and media_type != "video":
-                            media_url = media['media_url_https']
-                            media_type = 'photo'
-
-                post_as_url = False
-
-                if 'extended_entities' in data and 'media' in data['extended_entities']:
-                    for media in data['extended_entities']['media']:
-                        if media['type'] == 'photo' and not media_url:
-                            media_url = media['media_url_https']
-                            media_type = media['type']
-                        if media['type'] == 'video':
-                            post_as_url = True
-                            media_type = media['type']
-                        if media['type'] == 'animated_gif' and media_type != "video":
-                            post_as_url = True
-                            media_type = 'gif'
 
                 if post_as_url:
                     text_variant = '[@%s](https://twitter.com/%s) tweeted (with %s) at %s: %s' %(data['user']['screen_name'], data['user']['screen_name'], media_type, datetime.strptime(data['created_at'], '%a %b %d %H:%M:%S +0000 %Y').isoformat(' '), "https://twitter.com/" + data['user']['screen_name'] + "/status/" + str(data['id_str']))
