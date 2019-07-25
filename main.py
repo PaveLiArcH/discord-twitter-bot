@@ -54,6 +54,11 @@ class StdOutListener(StreamListener):
                         #print('This is a retweeted status')
                         continue
 
+            if 'IncludeMediaOnly' in dataDiscord:         #retweets...
+                if dataDiscord['IncludeMediaOnly'] == False:
+                    if 'extended_tweet' not in data and 'media' not in data['entities']:
+                        #print('This is a non media status')
+                        continue
 
 
             for wh_url in dataDiscord['webhook_urls']:
@@ -61,6 +66,11 @@ class StdOutListener(StreamListener):
                 username = data['user']['screen_name']
                 icon_url = data['user']['profile_image_url']
 
+                if 'retweeted_status' in data:
+                    text_variant = '[@%s](https://twitter.com/%s) retweeted at %s: %s' %(username, username, datetime.strptime(data['created_at'], '%a %b %d %H:%M:%S +0000 %Y').isoformat(' '), "https://twitter.com/" + data['user']['screen_name'] + "/status/" + str(data['id_str']))
+                    wh = Webhook(url=wh_url, content=text_variant, username = username, icon_url=icon_url)
+                    wh.post()
+                    continue
 
                 text = ''
                 if 'extended_tweet' in data:
@@ -118,14 +128,12 @@ class StdOutListener(StreamListener):
 
                 text = html.unescape(text)
                 at = Embed(author_name=username,
-                           author_url="https://twitter.com/" + data['user']['screen_name'],
+                           author_url="https://twitter.com/" + data['user']['screen_name'] + "/status/" + str(data['id_str']),
                            author_icon=icon_url,
                            color=random.choice(colors),
                            description=text,
                            media_url=media_url,
                            media_type=media_type,
-                           title=data['user']['name'],
-                           url="https://twitter.com/" + data['user']['screen_name'] + "/status/" + str(data['id_str']),
                            footer="Tweet created on",
                            footer_icon="https://cdn1.iconfinder.com/data/icons/iconza-circle-social/64/697029-twitter-512.png",
                            timestamp=datetime.strptime(data['created_at'], '%a %b %d %H:%M:%S +0000 %Y').isoformat(' '))
