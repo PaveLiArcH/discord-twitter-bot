@@ -89,7 +89,7 @@ class StdOutListener(StreamListener):
                         media_type = 'gif'
 
             if 'IncludeMediaOnly' in dataDiscord:         #media...
-                if dataDiscord['IncludeMediaOnly'] == False:
+                if dataDiscord['IncludeMediaOnly'] == True:
                     if media_type == '':
                         #print('This is a non media status')
                         continue
